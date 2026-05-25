@@ -5,6 +5,6 @@ void main() {
     string name = "Hello";
     otherName := "World"; // go-style attribution
 
-    println(name);
-    fullName := sprintf("${name} ${otherName}")
+    //println(name);
+    // fullName := sprintf("${name} ${otherName}")
 }
