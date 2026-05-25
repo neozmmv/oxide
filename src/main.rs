@@ -1,8 +1,11 @@
 mod lexer;
 mod parser;
 mod ast;
-use lexer::Lexer;
-use parser::Parser;
+mod codegen;
+
+use logos::Logos;
+use lexer::Token;
+use chumsky::prelude::*;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -17,12 +20,21 @@ fn main() {
         std::process::exit(1);
     });
 
-    let mut lexer = Lexer::new(&source);
-    let tokens = lexer.tokenize();
+    // lex
+    let tokens: Vec<Token> = Token::lexer(&source)
+        .filter_map(|t| t.ok())
+        .collect();
 
-    let mut parser = Parser::new(tokens);
-    match parser.parse_program() {
-        Ok(program) => println!("{:#?}", program),
-        Err(e) => eprintln!("Parse error: {}", e),
+    // parse
+    let result = parser::parser().parse(tokens.as_slice());
+
+    match result {
+        Ok(ast) => println!("{:#?}", ast),
+        Err(errs) => {
+            if let Some(err) = errs.first() {
+                eprintln!("Parse error: {:?}", err);
+            }
+            std::process::exit(1);
+        }
     }
 }
