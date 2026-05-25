@@ -33,6 +33,8 @@ pub enum BinaryOp {
 pub enum UnaryOp {
     Not,       // !
     Neg,       // -x
+    PostIncrement, // x++
+    PostDecrement, // x--
 }
 
 #[derive(Debug, Clone)]
