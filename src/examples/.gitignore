@@ -1,2 +1,4 @@
 *.c
 *.exe
+test.ox
+test.exe

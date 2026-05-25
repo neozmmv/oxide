@@ -2,6 +2,36 @@ use chumsky::prelude::*;
 use crate::lexer::Token;
 use crate::ast::*;
 
+fn parse_string_interp(s: &str) -> Vec<StringPart> {
+    let mut parts = vec![];
+    let mut current = String::new();
+    let mut chars = s.chars().peekable();
+
+    while let Some(ch) = chars.next() {
+        if ch == '$' && chars.peek() == Some(&'{') {
+            chars.next();
+            if !current.is_empty() {
+                parts.push(StringPart::Literal(current.clone()));
+                current.clear();
+            }
+            let mut expr_str = String::new();
+            for c in chars.by_ref() {
+                if c == '}' { break; }
+                expr_str.push(c);
+            }
+            parts.push(StringPart::Expr(Box::new(Expr::Ident(expr_str))));
+        } else {
+            current.push(ch);
+        }
+    }
+
+    if !current.is_empty() {
+        parts.push(StringPart::Literal(current));
+    }
+
+    parts
+}
+
 pub fn parser() -> impl Parser<Token, Program, Error = Simple<Token>> {
     // type parser
     let ty = select! {
@@ -39,6 +69,9 @@ pub fn parser() -> impl Parser<Token, Program, Error = Simple<Token>> {
     // expression parser (recursive)
     let expr = recursive(|expr| {
         let primary = literal.map(Expr::Literal)
+            .or(select! {
+                Token::StringInterp(s) => s,
+            }.map(|s| Expr::StringInterp(parse_string_interp(&s))))
             .or(ident.clone().then(
                 just(Token::LParen)
                     .ignore_then(

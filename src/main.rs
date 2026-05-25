@@ -30,6 +30,20 @@ fn main() {
         .filter_map(|t| t.ok())
         .collect();
 
+    let tokens: Vec<Token> = Token::lexer(&source)
+        .filter_map(|t| {
+            match t {
+                Ok(tok) => Some(tok),
+                Err(e) => {
+                    eprintln!("Lex error: {:?}", e);
+                    None
+                }
+            }
+        })
+        .collect();
+
+    println!("Tokens: {:#?}", tokens);
+
     // parse
     let program = match parser::parser().parse(tokens) {
         Ok(ast) => ast,
@@ -40,6 +54,8 @@ fn main() {
             std::process::exit(1);
         }
     };
+
+    println!("{:#?}", program);
 
     let mut checker = TypeChecker::new();
     checker.check_program(&program);

@@ -1,6 +1,7 @@
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
+
 pub enum Type {
     Int,
     Float,
@@ -57,6 +58,12 @@ pub enum UnaryOp {
 }
 
 #[derive(Debug, Clone)]
+pub enum StringPart {
+    Literal(String),
+    Expr(Box<Expr>),
+}
+
+#[derive(Debug, Clone)]
 pub enum Expr {
     Literal(Literal),
     Ident(String),
@@ -86,6 +93,7 @@ pub enum Expr {
         method: String,
         args: Vec<Expr>,
     },
+    StringInterp(Vec<StringPart>),
 }
 
 #[derive(Debug, Clone)]

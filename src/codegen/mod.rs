@@ -53,7 +53,13 @@ impl Codegen {
     }
 
     fn gen_function(&mut self, return_ty: &Type, name: &str, params: &[Param], body: &[Stmt]) {
-        let ret = self.gen_type(return_ty);
+        // in C, main must return int
+        let ret = if name == "main" {
+            "int".to_string()
+        } else {
+            self.gen_type(return_ty)
+        };
+
         let params_str = if params.is_empty() {
             "void".to_string()
         } else {
@@ -67,7 +73,6 @@ impl Codegen {
             }).collect::<Vec<_>>().join(", ")
         };
 
-        // 'never' in Oxide maps to void + __attribute__((noreturn)) in C
         let noreturn = if matches!(return_ty, Type::Never) {
             "__attribute__((noreturn)) "
         } else {
@@ -78,6 +83,10 @@ impl Codegen {
         self.indent += 1;
         for stmt in body {
             self.gen_stmt(stmt);
+        }
+        // add return 0 for main
+        if name == "main" {
+            self.emit_line("return 0;");
         }
         self.indent -= 1;
         self.emit_line("}");
@@ -236,6 +245,26 @@ impl Codegen {
                 Literal::Bool(b)   => if *b { "true".to_string() } else { "false".to_string() },
                 Literal::Null      => "NULL".to_string(),
             },
+            Expr::StringInterp(parts) => {
+                let mut fmt_str = String::new();
+                let mut args = vec![];
+
+                for part in parts {
+                    match part {
+                        StringPart::Literal(s) => fmt_str.push_str(s),
+                        StringPart::Expr(e) => {
+                            fmt_str.push_str("%s");
+                            args.push(self.gen_expr_const(e));
+                        }
+                    }
+                }
+
+                if args.is_empty() {
+                    format!("\"{}\"", fmt_str)
+                } else {
+                    format!("\"{}\"", fmt_str) // returned as format string, args handled by caller
+                }
+            }
             Expr::Ident(name) => name.clone(),
             Expr::BinaryOp { op, left, right } => {
                 let l = self.gen_expr_const(left);
@@ -282,14 +311,31 @@ impl Codegen {
                             "printf(\"\\n\")".to_string()
                         } else {
                             let arg = &args[0];
-                            let fmt = match arg {
-                                Expr::Literal(Literal::String(_)) => "%s",
-                                Expr::Literal(Literal::Int(_))    => "%d",
-                                Expr::Literal(Literal::Float(_))  => "%f",
-                                Expr::Literal(Literal::Bool(_))   => "%d",
-                                _ => "%d", // fallback for variables
-                            };
-                            format!("printf(\"{}\\n\", {})", fmt, self.gen_expr_const(arg))
+                            match arg {
+                                Expr::StringInterp(parts) => {
+                                    let mut fmt_str = String::new();
+                                    let mut printf_args = vec![];
+                                    for part in parts {
+                                        match part {
+                                            StringPart::Literal(s) => fmt_str.push_str(s),
+                                            StringPart::Expr(e) => {
+                                                fmt_str.push_str("%s");
+                                                printf_args.push(self.gen_expr_const(e));
+                                            }
+                                        }
+                                    }
+                                    let args_str = printf_args.join(", ");
+                                    if args_str.is_empty() {
+                                        format!("printf(\"{}\\n\")", fmt_str)
+                                    } else {
+                                        format!("printf(\"{}\\n\", {})", fmt_str, args_str)
+                                    }
+                                }
+                                Expr::Literal(Literal::String(_)) => {
+                                    format!("printf(\"%s\\n\", {})", self.gen_expr_const(arg))
+                                }
+                                _ => format!("printf(\"%d\\n\", {})", self.gen_expr_const(arg)),
+                            }
                         }
                     }
                     "printf"  => format!("printf({})", args_str),

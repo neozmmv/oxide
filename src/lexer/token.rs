@@ -92,11 +92,18 @@ pub enum Token {
     Ident(String),
 
 
-    #[regex(r#""[^"]*""#, |lex| {
+    #[regex(r#""[^"$]*""#, |lex| {
         let s = lex.slice();
         Some(s[1..s.len()-1].to_string())
     })]
     StringLiteral(String),
+
+    // strings with interpolation: captured raw with quotes
+#[regex(r#""[^"]*\$\{[^"]*""#, |lex| {
+        let s = lex.slice();
+        Some(s[1..s.len()-1].to_string())
+    })]
+    StringInterp(String),
 }
 
 impl Eq for Token {}

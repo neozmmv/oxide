@@ -200,6 +200,14 @@ impl TypeChecker {
                 Literal::Bool(_)   => Type::Bool,
                 Literal::Null      => Type::Null,
             },
+            Expr::StringInterp(parts) => {
+                for part in parts {
+                    if let StringPart::Expr(e) = part {
+                        self.check_expr(e);
+                    }
+                }
+                Type::String
+            }
             Expr::Ident(name) => {
                 match self.lookup(name) {
                     Some(ty) => ty.clone(),
