@@ -17,11 +17,11 @@ impl fmt::Display for TypeError {
             TypeError::UndeclaredVariable(name) =>
                 write!(f, "undeclared variable '{}'", name),
             TypeError::TypeMismatch { expected, found } =>
-                write!(f, "type mismatch: expected '{:?}', found '{:?}'", expected, found),
+                write!(f, "type mismatch: expected '{}', found '{}'", expected, found),
             TypeError::NullAssignedToNonNullable(name) =>
                 write!(f, "cannot assign null to non-nullable variable '{}'", name),
             TypeError::ReturnTypeMismatch { expected, found } =>
-                write!(f, "return type mismatch: expected '{:?}', found '{:?}'", expected, found),
+                write!(f, "return type mismatch: expected '{}', found '{}'", expected, found),
             TypeError::UndeclaredFunction(name) =>
                 write!(f, "undeclared function '{}'", name),
         }

@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Int,
@@ -9,6 +11,22 @@ pub enum Type {
     Null,
     Nullable(Box<Type>), // string?
     Array(Box<Type>),    // int[]
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Type::Int            => write!(f, "int"),
+            Type::Float          => write!(f, "float"),
+            Type::String         => write!(f, "string"),
+            Type::Bool           => write!(f, "bool"),
+            Type::Void           => write!(f, "void"),
+            Type::Never          => write!(f, "never"),
+            Type::Null           => write!(f, "null"),
+            Type::Nullable(inner) => write!(f, "{}?", inner),
+            Type::Array(inner)   => write!(f, "{}[]", inner),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
