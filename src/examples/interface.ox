@@ -8,3 +8,7 @@ struct Dog implements Animal {
     string species;
     int age;
 }
+
+void (&Dog d) sound() {
+    println("WOOF!\n");
+}
