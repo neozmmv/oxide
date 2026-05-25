@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Int,
     Float,
@@ -6,6 +6,7 @@ pub enum Type {
     Bool,
     Void,
     Never,
+    Null,
     Nullable(Box<Type>), // string?
     Array(Box<Type>),    // int[]
 }

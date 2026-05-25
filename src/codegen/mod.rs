@@ -94,6 +94,7 @@ impl Codegen {
             Type::Never   => "void".to_string(),
             Type::Nullable(inner) => self.gen_type(inner), // nullable is just a pointer in C
             Type::Array(_) => todo!(),
+            Type::Null => "void*".to_string(),
         }
     }
 

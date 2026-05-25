@@ -23,12 +23,12 @@ pub fn parser() -> impl Parser<Token, Program, Error = Simple<Token>> {
 
     // literal parser
     let literal = select! {
-        Token::Int(n)              => Literal::Int(n),
-        Token::Float(f)            => Literal::Float(f),
-        Token::StringLiteral(s)    => Literal::String(s),
-        Token::True                => Literal::Bool(true),
-        Token::False               => Literal::Bool(false),
-        Token::Null                => Literal::Null,
+        Token::Int(n)           => Literal::Int(n),
+        Token::Float(f)         => Literal::Float(f),
+        Token::StringLiteral(s) => Literal::String(s),
+        Token::True             => Literal::Bool(true),
+        Token::False            => Literal::Bool(false),
+        Token::Null             => Literal::Null,
     };
 
     // identifier parser
@@ -79,6 +79,19 @@ pub fn parser() -> impl Parser<Token, Program, Error = Simple<Token>> {
                 Expr::MethodCall { object: Box::new(obj), method: field, args }
             } else {
                 Expr::FieldAccess { object: Box::new(obj), field }
+            }
+        });
+
+        // post-increment and post-decrement: x++, x--
+        let primary = primary.then(
+            just(Token::PlusPlus).to(UnaryOp::PostIncrement)
+                .or(just(Token::MinusMinus).to(UnaryOp::PostDecrement))
+                .or_not()
+        ).map(|(expr, op)| {
+            if let Some(op) = op {
+                Expr::UnaryOp { op, expr: Box::new(expr) }
+            } else {
+                expr
             }
         });
 
